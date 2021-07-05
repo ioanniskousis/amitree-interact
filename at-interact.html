@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" type="image/png" href="amitree.png"/>
+  <title>Amitree API Interact</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    p {
+      word-wrap: break-word;
+      padding: 4px;
+      color: #333;
+    }
+
+    h1 {
+      font-size: 32px;
+    }
+
+    h2 {
+      font-size: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      height: 60px;
+      background-color: #379;
+      display: flex;
+      justify-content: start;
+      align-items: center;
+
+    }
+
+    nav button {
+      font-size: 16px;
+      width: 50%;
+      max-width: 100px;
+      height: 100%;
+      color: white;
+      border: none;
+      background-color: transparent;
+      cursor: pointer;
+      margin: 0;
+
+    }
+
+    nav button:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    main {
+      height: calc(100vh - 60px);
+      background-color: palegoldenrod;
+      position: relative;
+    }
+
+    main section {
+      width: 100%;
+      height: 100%;
+      visibility: hidden;
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 20px 40px;
+      color: #379;
+      overflow: auto;
+    }
+
+    .visible-block {
+      display: block;
+      visibility: visible;
+    }
+
+    .hidden-block {
+      display: none;
+      visibility: hidden;
+    }
+
+    #home-section {
+      visibility: visible;
+      display: block;
+    }
+
+    .form-container {
+      width: 100%;
+      max-width: 600px;
+      background-color: rgba(255, 255, 255, 0.5);
+      margin: auto;
+      border-radius: 4px;
+    }
+
+    .input-container {
+      padding: 20px;
+      border-bottom: 1px solid rgba(30, 30, 30, 0.1);
+    }
+
+    .input-container label {
+      display: block;
+      margin: 4px;
+      font-size: 16px;
+    }
+
+    .input-container input, 
+    .input-container button {
+      display: block;
+      margin: 0;
+      font-size: 16px;
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 3px;
+    }
+
+    .input-container button {
+      background-color: #379;
+      color: white;
+      cursor: pointer;
+    }
+
+    .input-container button:active {
+      opacity: 0.7;
+    }
+
+    label span {
+      color: brown;
+      font-size: 12px;
+      margin: 0 4px;
+    }
+  </style>
+  <script>
+    const hostUrl = 'http://localhost:3000';
+    let auth_token = '';
+
+    function parseLoginResponse(json) {
+      const error = json.error;
+      if (error) {
+        if (error.user_authentication) {
+          alert(error.user_authentication)
+        } else {
+          alert(JSON.stringify(json.error));
+        }
+      } else {
+        auth_token = json.auth_token;
+        const created_referral_code = json.referral ? json.referral : 'not created';
+        const buttonClass = json.referral ? 'hidden-block' : '';
+        const inviterClass = json.invitername ? '' : 'hidden-block';
+
+        const invited_users = json.invited_users;
+
+        const creditfromsignup = json.creditfromsignup;
+
+        document.getElementById("current_user").innerHTML = json.username;
+        document.getElementById("inviter-name").innerHTML = json.invitername;
+        document.getElementById("credit-from-sign-up").innerHTML = json.creditfromsignup;
+        document.getElementById("inviter-container").className = inviterClass
+
+        document.getElementById("created_referral_code").innerHTML = created_referral_code;
+        document.getElementById("create-referral").className = buttonClass
+        
+        let invited_users_innerHTML = ''
+        for (let i = 0; i < invited_users.length; i++) {
+          invited_users_innerHTML = invited_users_innerHTML + invited_users[i].name + ' - ' + invited_users[i].email + '<br/>';
+        }
+        document.getElementById("invited_users").innerHTML = invited_users_innerHTML;
+        document.getElementById("credit-from-referral").innerHTML = json.creditfromreferral;
+
+        showSection('user-section');
+      }
+    }
+
+    function parseSignUpResponse(json) {
+      if (json.error) {
+        alert(JSON.stringify(json.error));
+      } else {
+        auth_token = json.auth_token;
+        const inviterClass = json.invitername ? '' : 'hidden-block';
+        
+        document.getElementById("current_user").innerHTML = json.username;
+        document.getElementById("inviter-name").innerHTML = json.invitername;
+        document.getElementById("credit-from-sign-up").innerHTML = json.creditfromsignup;
+        document.getElementById("inviter-container").className = inviterClass
+        document.getElementById("created_referral_code").innerHTML = 'not created';
+        document.getElementById("create-referral").className = '';
+        
+        document.getElementById("invited_users").innerHTML = 'none';
+        document.getElementById("credit-from-referral").innerHTML = '$0';
+        showSection('user-section');
+      }
+    }
+
+    function createNavEvents() {
+      const nav = document.getElementsByTagName("nav")[0];
+      const navButtons = nav.getElementsByTagName("button");
+      for (let i = 0; i < navButtons.length; i++) {
+        navButtons[i].onclick = (e) => {
+          showSection(e.target.getAttribute('section'))
+        }
+      }
+    }
+
+    function createLoginEvents() {
+      const form = document.getElementById("loginForm");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const actionUrl = `${hostUrl}/authenticate`;
+        const formData = new FormData(form);
+
+        fetch(actionUrl, {
+          method: 'post',
+          body: formData
+        })
+        .then((response) => response.json())
+        .then((json) => parseLoginResponse(json))
+        .catch((e) => {
+          alert(e)
+        })
+      });
+    }
+
+    function createSignUpEvents() {
+      const form = document.getElementById("signupForm");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const actionUrl = `${hostUrl}/register`;
+        const formData = new FormData(form);
+
+        fetch(actionUrl, {
+          method: 'post',
+          body: formData
+        })
+        .then((response) => response.json())
+        .then((json) => parseSignUpResponse(json))
+        .catch((err) => {
+          alert(err)
+        })
+      });
+    }
+
+    function onload() {
+      createEvents();
+
+      const params = new URLSearchParams(document.location.search.substring(1));
+      const referral_code = params.get("referral_code");
+      if (referral_code) {
+        document.getElementById("referral_code").value = referral_code;
+        showSection('signup-section');
+      }
+    }
+
+    async function createReferral() {
+      const apiUrl = "http://localhost:3000/referral";
+      const options = {
+        method: 'post',
+        headers: {
+          'Authorization': 'Bearer ' + auth_token
+        }
+      }
+      await fetch(apiUrl, options)
+        .then((response) => {
+          return response.json();
+        } )
+        .then((json) => parseCreatedReferral(json))
+        .catch((e) => {
+          alert("API call Error : " + e);
+        });
+    }
+    
+    function parseCreatedReferral(response) {
+      if (response.referral_code) {
+        document.getElementById("created_referral_code").innerHTML = response.referral_code;
+        document.getElementById("create-referral").className = 'hidden-block';
+      } else {
+        if (response.constrain) {
+          alert(response.constrain);
+        } else {
+          alert(response);
+        }
+        
+      }
+    }
+
+    function createEvents() {
+      createNavEvents();
+      createLoginEvents();
+      createSignUpEvents();
+    }
+
+    function showSection(section) {
+      const sections = document.getElementsByTagName("section");
+      for(let i = 0; i < sections.length; i++) {
+        sections[i].style.display = 'none';
+        sections[i].style.visibility = 'hidden';
+      }
+      document.getElementById(section).style.display = 'block';
+      document.getElementById(section).style.visibility = 'visible';
+    }
+  </script>
+</head>
+
+<body onload="onload()">
+  <nav>
+    <button section="home-section">Home</button>
+    <button section="login-section">Login</button>
+    <button section="signup-section">Sign Up</button>
+    <button section="user-section">User</button>
+    <button section="referral-section">Referral</button>
+  </nav>
+  <main>
+    <section id="home-section">
+      <h1>
+        This application aims to interact with the Amitree API
+      </h1>
+      <h2>
+        Log in using your email and password credentials 
+        or sign up to register a new account
+      </h2>
+      <h2>
+        Registered users can invite other users and earn $10 for each group of 5 new users
+      </h2>
+
+    </section>
+
+    <section id="login-section">
+      <div class="form-container">
+        <form id="loginForm" method="POST" enctype="multipart/form-data">
+          <div class="input-container">
+            <label for="email">Email</label>
+            <input type="email" name="email" id="email" />
+          </div>
+      
+          <div class="input-container">
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" />
+          </div>
+      
+          <div class="input-container">
+            <button type="submit">Log in</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="signup-section">
+      <div class="form-container">
+        <form id="signupForm" method="POST" enctype="multipart/form-data">
+          <div  class="input-container">
+            <label for="name">Name</label>
+            <input name="name" id="name" />
+          </div>
+          <div  class="input-container">
+            <label for="email">Email</label>
+            <input name="email" id="email" />
+          </div>
+          <div  class="input-container">
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" />
+          </div>
+          <div  class="input-container">
+            <label for="password_confirmation">Password confirmation</label>
+            <input type="password" name="password_confirmation" id="password_confirmation" />
+          </div>
+          <div  class="input-container">
+            <label for="referral_code">Referral Code <span>(use a valid referral code to gain $10 credit)</span>   </label>
+            <input type="text" name="referral_code" id="referral_code"  />
+          </div>
+          <div  class="input-container">
+            <button type="submit">Register</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section id="user-section">
+      <h1>User info</h1>
+      <div class="form-container">
+        <div  class="input-container">
+          <label>User Name</label>
+          <p id="current_user">not authenticated</p>
+       </div>
+       <div id="inviter-container">
+        <div  class="input-container">
+          <label>Inviter</label>
+          <p id="inviter-name">not authenticated</p>
+        </div>
+        <div  class="input-container">
+          <label>Credit from sign up with referral code</label>
+          <p id="credit-from-sign-up">$0</p>
+        </div>
+      </div>
+
+      </div>
+    </section>
+
+    <section id="referral-section">
+      <h1>Referral info</h1>
+      <div class="form-container">
+        <div  class="input-container">
+          <label>Created Referral Code</label>
+          <p id="created_referral_code">not authenticated</p>
+          <button id="create-referral" onclick="createReferral()">Create Referral Code</button>
+        </div>
+        <div  class="input-container">
+          <label>Registered Invited Users</label>
+          <p id="invited_users">not authenticated</p>
+
+          <label>Credit from invited users</label>
+          <p id="credit-from-referral">not authenticated</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
