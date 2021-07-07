@@ -204,12 +204,12 @@
 
         const invited_users = json.invited_users;
 
-        const creditfromsignup = json.creditfromsignup;
+        const credit_from_signup = json.credit_from_signup;
 
         document.getElementById("current_user").innerHTML = json.user_name;
         // document.getElementById("auth_token").innerHTML = auth_token;
         document.getElementById("inviter-name").innerHTML = json.inviter_name;
-        document.getElementById("credit-from-sign-up").innerHTML = json.creditfromsignup;
+        document.getElementById("credit-from-sign-up").innerHTML = json.credit_from_signup;
         document.getElementById("inviter-container").className = inviterClass
 
         document.getElementById("created_referral_code").innerHTML = created_referral_code;
@@ -236,7 +236,7 @@
         document.getElementById("current_user").innerHTML = json.user_name;
         // document.getElementById("auth_token").innerHTML = auth_token;
         document.getElementById("inviter-name").innerHTML = json.inviter_name;
-        document.getElementById("credit-from-sign-up").innerHTML = json.creditfromsignup;
+        document.getElementById("credit-from-sign-up").innerHTML = json.credit_from_signup;
         document.getElementById("inviter-container").className = inviterClass
         document.getElementById("created_referral_code").innerHTML = 'not created';
         document.getElementById("create-referral").className = '';
