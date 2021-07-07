@@ -3,6 +3,9 @@
 ## This application aims to interact with the Amitree API and demonstates how developers can exploit the capabilities of the API.
 
 <hr/>
+<h2 style="text-align: center"><a href="https://ioanniskousis.github.io/amitree-interact/">Working Demo</a></h2>
+
+<hr/>
 
 <!--
 *** Thanks for checking out this README Template. If you have a suggestion that would
@@ -46,6 +49,9 @@ The file index.html contains all the functionality to be demonstrated.
 
 will insert the code into the signup form
 
+<h2 style="text-align: center"><a href="https://ioanniskousis.github.io/amitree-interact?referral_code=cce01187a4764b5f09ee">Sample</a></h2>
+
+
 <hr/>
 <br/>
 
@@ -65,6 +71,8 @@ Adding an apiURL search parameter i.e
 the app will do the requests to your local runing rails server
 
 Note that you may need to adjust the connection port 3000 to what is appropriate
+
+<h2 style="text-align: center"><a href="https://ioanniskousis.github.io/amitree-interact?apiURL=http://localhost:3000">Sample</a></h2>
 
 <hr/>
 <br/>
