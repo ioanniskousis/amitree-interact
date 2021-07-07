@@ -39,23 +39,21 @@
       display: flex;
       justify-content: start;
       align-items: center;
-
     }
 
-    nav button {
+    .nav-button  {
       font-size: 16px;
       width: 50%;
       max-width: 100px;
       height: 100%;
       color: white;
       border: none;
-      background-color: transparent;
+      background-color: #379;
       cursor: pointer;
       margin: 0;
-
     }
 
-    nav button:hover {
+    .nav-button:hover {
       background-color: rgba(255, 255, 255, 0.3);
     }
 
@@ -86,11 +84,6 @@
     .hidden-block {
       display: none;
       visibility: hidden;
-    }
-
-    #home-section {
-      visibility: visible;
-      display: block;
     }
 
     .form-container {
@@ -138,10 +131,62 @@
       font-size: 12px;
       margin: 0 4px;
     }
+
+    table {
+      padding: 10px;
+      width: 100%;
+    }
+
+    td, th {
+      padding: 4px 10px;
+      border: 1px solid #999;
+    }
+
+    tr {
+      border-bottom: 1px solid #999;
+    }
+
+    .panels-selector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 40px;
+    }
+
+    .panels-selector button {
+      flex: 1;
+      height: 100%;
+      border: none;
+      font-size: 16px;
+      color: white;
+      background-color: #379;
+      cursor: pointer;
+    }
+
+    .panels-selector button:hover {
+      opacity: 0.7;
+    }
   </style>
   <script>
-    const hostUrl = 'http://localhost:3000';
+    // let apiURL = 'http://localhost:3000';
+    let apiURL = 'https://boiling-fjord-82978.herokuapp.com';
     let auth_token = '';
+
+    function onload() {
+      createEvents();
+      showSection('home');
+
+      const params = new URLSearchParams(document.location.search.substring(1));
+      const referral_code = params.get("referral_code");
+      if (referral_code) {
+        document.getElementById("referral_code").value = referral_code;
+        showSection('signup');
+      }
+      const api_param = params.get("apiURL");
+      if (api_param) {
+        apiURL = api_param;
+      }
+    }
 
     function parseLoginResponse(json) {
       const error = json.error;
@@ -155,14 +200,15 @@
         auth_token = json.auth_token;
         const created_referral_code = json.referral ? json.referral : 'not created';
         const buttonClass = json.referral ? 'hidden-block' : '';
-        const inviterClass = json.invitername ? '' : 'hidden-block';
+        const inviterClass = json.inviter_name ? 'input-container' : 'hidden-block';
 
         const invited_users = json.invited_users;
 
         const creditfromsignup = json.creditfromsignup;
 
-        document.getElementById("current_user").innerHTML = json.username;
-        document.getElementById("inviter-name").innerHTML = json.invitername;
+        document.getElementById("current_user").innerHTML = json.user_name;
+        // document.getElementById("auth_token").innerHTML = auth_token;
+        document.getElementById("inviter-name").innerHTML = json.inviter_name;
         document.getElementById("credit-from-sign-up").innerHTML = json.creditfromsignup;
         document.getElementById("inviter-container").className = inviterClass
 
@@ -174,9 +220,9 @@
           invited_users_innerHTML = invited_users_innerHTML + invited_users[i].name + ' - ' + invited_users[i].email + '<br/>';
         }
         document.getElementById("invited_users").innerHTML = invited_users_innerHTML;
-        document.getElementById("credit-from-referral").innerHTML = json.creditfromreferral;
+        document.getElementById("credit-from-referral").innerHTML = json.credit_from_referral;
 
-        showSection('user-section');
+        showSection('user');
       }
     }
 
@@ -185,10 +231,11 @@
         alert(JSON.stringify(json.error));
       } else {
         auth_token = json.auth_token;
-        const inviterClass = json.invitername ? '' : 'hidden-block';
+        const inviterClass = json.inviter_name ? 'input-container' : 'hidden-block';
         
-        document.getElementById("current_user").innerHTML = json.username;
-        document.getElementById("inviter-name").innerHTML = json.invitername;
+        document.getElementById("current_user").innerHTML = json.user_name;
+        // document.getElementById("auth_token").innerHTML = auth_token;
+        document.getElementById("inviter-name").innerHTML = json.inviter_name;
         document.getElementById("credit-from-sign-up").innerHTML = json.creditfromsignup;
         document.getElementById("inviter-container").className = inviterClass
         document.getElementById("created_referral_code").innerHTML = 'not created';
@@ -196,13 +243,12 @@
         
         document.getElementById("invited_users").innerHTML = 'none';
         document.getElementById("credit-from-referral").innerHTML = '$0';
-        showSection('user-section');
+        showSection('user');
       }
     }
 
     function createNavEvents() {
-      const nav = document.getElementsByTagName("nav")[0];
-      const navButtons = nav.getElementsByTagName("button");
+      const navButtons = document.getElementsByClassName("nav-button");
       for (let i = 0; i < navButtons.length; i++) {
         navButtons[i].onclick = (e) => {
           showSection(e.target.getAttribute('section'))
@@ -215,13 +261,13 @@
 
       form.addEventListener("submit", (e) => {
         e.preventDefault();
-        const actionUrl = `${hostUrl}/authenticate`;
+        const actionUrl = `${apiURL}/authenticate`;
         const formData = new FormData(form);
-
-        fetch(actionUrl, {
+        const options = {
           method: 'post',
           body: formData
-        })
+        }
+        fetch(actionUrl, options)
         .then((response) => response.json())
         .then((json) => parseLoginResponse(json))
         .catch((e) => {
@@ -235,13 +281,13 @@
 
       form.addEventListener("submit", (e) => {
         e.preventDefault();
-        const actionUrl = `${hostUrl}/register`;
+        const actionUrl = `${apiURL}/register`;
         const formData = new FormData(form);
-
-        fetch(actionUrl, {
+        const options = {
           method: 'post',
           body: formData
-        })
+        }
+        fetch(actionUrl, options)
         .then((response) => response.json())
         .then((json) => parseSignUpResponse(json))
         .catch((err) => {
@@ -250,26 +296,15 @@
       });
     }
 
-    function onload() {
-      createEvents();
-
-      const params = new URLSearchParams(document.location.search.substring(1));
-      const referral_code = params.get("referral_code");
-      if (referral_code) {
-        document.getElementById("referral_code").value = referral_code;
-        showSection('signup-section');
-      }
-    }
-
     async function createReferral() {
-      const apiUrl = "http://localhost:3000/referral";
+      const actionUrl = `${apiURL}/referral`;
       const options = {
         method: 'post',
         headers: {
           'Authorization': 'Bearer ' + auth_token
         }
       }
-      await fetch(apiUrl, options)
+      await fetch(actionUrl, options)
         .then((response) => {
           return response.json();
         } )
@@ -285,12 +320,62 @@
         document.getElementById("create-referral").className = 'hidden-block';
       } else {
         if (response.constrain) {
-          alert(response.constrain);
+          alert(JSON.stringify(response.constrain));
+        } else if (response.error) {
+          alert(response.error);
         } else {
-          alert(response);
+          alert(JSON.stringify(response));
         }
         
       }
+    }
+
+    function parseUsersIndexResponse(json) {
+      if (json.error) {
+        alert(json.error);
+        return
+      }
+      // alert(JSON.stringify(json))
+      // document.getElementById('users-index').innerHTML = JSON.stringify(json);
+
+      const usersTable = document.getElementById('users-index');
+      usersTable.innerHTML = ''
+      const thr = document.createElement('tr');
+      const cell0h = document.createElement('th');
+      const cell1h = document.createElement('th');
+      cell0h.innerHTML = 'Name';
+      cell1h.innerHTML = 'Email';
+      thr.append(cell0h);
+      thr.append(cell1h);
+      usersTable.append(thr);
+      for (let i = 0; i < json.length; i++) {
+        const tr = document.createElement('tr');
+        const cell0 = document.createElement('td');
+        const cell1 = document.createElement('td');
+        cell0.innerHTML = json[i].name;
+        cell1.innerHTML = json[i].email;
+        tr.append(cell0);
+        tr.append(cell1);
+        usersTable.append(tr);
+      }
+    }
+
+    async function loadUsersIndex() {
+      const actionUrl = `${apiURL}/users`;
+      const options = {
+        method: 'get',
+        headers: {
+          'Authorization': 'Bearer ' + auth_token
+        }
+      }
+      await fetch(actionUrl, options)
+        .then((response) => {
+          return response.json();
+        } )
+        .then((json) => parseUsersIndexResponse(json))
+        .catch((e) => {
+          alert("UsersIndex call Error : " + e);
+        });
     }
 
     function createEvents() {
@@ -305,19 +390,25 @@
         sections[i].style.display = 'none';
         sections[i].style.visibility = 'hidden';
       }
-      document.getElementById(section).style.display = 'block';
-      document.getElementById(section).style.visibility = 'visible';
+      document.getElementById(`${section}-section`).style.display = 'block';
+      document.getElementById(`${section}-section`).style.visibility = 'visible';
+
+      // if (section == "users-index") {
+      //   loadUsersIndex();
+      // }
     }
   </script>
 </head>
 
 <body onload="onload()">
-  <nav>
-    <button section="home-section">Home</button>
-    <button section="login-section">Login</button>
-    <button section="signup-section">Sign Up</button>
-    <button section="user-section">User</button>
-    <button section="referral-section">Referral</button>
+  <nav id="nav-bar">
+    <button class="nav-button" section="home" id="home-button">Home</button>
+    <button class="nav-button" section="login" id="login-button">Login</button>
+    <button class="nav-button" section="signup" id="signup-button">Sign Up</button>
+    <button class="nav-button" section="user" id="user-button">User</button>
+    <button class="nav-button" section="referral" id="referral-button">Referral</button>
+    <!-- <button class="nav-button" section="users-index" id="users-index-button">Users Index</button> -->
+    
   </nav>
   <main>
     <section id="home-section">
@@ -387,22 +478,36 @@
     <section id="user-section">
       <h1>User info</h1>
       <div class="form-container">
+        <!-- <div class="panels-selector">
+          <button panel="details">Details</button>
+          <button panel="referral">Referral</button>
+          <button panel="invites">Invites</button>
+        </div>
+        <div class="user-panel" id="details-panel">
+
+        </div> -->
+        <!-- <div class="user-panel" id="referral-panel">
+
+        </div>
+        <div class="user-panel" id="invites-panel">
+
+        </div> -->
         <div  class="input-container">
           <label>User Name</label>
           <p id="current_user">not authenticated</p>
-       </div>
-       <div id="inviter-container">
-        <div  class="input-container">
+          <!-- <label>Auth Token</label>
+          <p id="auth_token">not authenticated</p> -->
+        </div>
+        <div  class="input-container" id="inviter-container">
           <label>Inviter</label>
           <p id="inviter-name">not authenticated</p>
-        </div>
-        <div  class="input-container">
+
           <label>Credit from sign up with referral code</label>
           <p id="credit-from-sign-up">$0</p>
         </div>
       </div>
 
-      </div>
+      
     </section>
 
     <section id="referral-section">
@@ -422,6 +527,13 @@
         </div>
       </div>
     </section>
+    <!-- <section id="users-index-section">
+      <div class="form-container">
+        <table id="users-index">
+
+        </table>
+      </div>
+    </section> -->
   </main>
 </body>
 </html>

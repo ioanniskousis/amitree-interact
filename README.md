@@ -3,7 +3,6 @@
 ## This application aims to interact with the Amitree API and demonstates how developers can exploit the capabilities of the API.
 
 <hr/>
-<br/><br/>
 
 <!--
 *** Thanks for checking out this README Template. If you have a suggestion that would
@@ -26,63 +25,57 @@
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 
-<br/>
-
-<!-- PROJECT LOGO -->
-<br />
-<p align="center">
-  <a href="https://github.com/ioanniskousis/amitree-interact" style="display: block; width:200px; height:200px;">
-    <img src="images/amitree.png" alt="Pets Logo" width="180" height="180">
-  </a>
-  
-  <p align="center">
-    <a href="https://github.com/ioanniskousis/amitree-interact"><strong>Explore the docs</strong></a>
-    <br />
-    <h1 style="text-align: center"><a href="https://ioanniskousis.github.io/amitree-interact/index.html">Working Demo</a></h1>
-    <h4>
-      <a href="https://github.com/ioanniskousis/amitree-interact/issues">Report Bug</a>
-    </h4>
-    <h4>
-      <a href="https://github.com/ioanniskousis/amitree-interact/issues">Request Feature</a>
-    </h4>
-  </p>
-</p>
-<hr/>
-
-<!-- TABLE OF CONTENTS -->
-
-## Contents
-
-- [About the Project](#about-the-project)
-- [Development](#development)
-- [Built With](#built-with)
-- [Contributors](#contributors)
-
 <hr/>
 
 <!-- ABOUT THE PROJECT -->
 
 ## About the project
 
+<br/>
+
+The file index.html contains all the functionality to be demonstrated.  
+<br/>
 <hr/>
+<br/>
 
-## Development
- 
+- Adding a referral_code search parameter i.e 
 
-<hr/>
+```
+/index.html?referral_code=some_valid_referral_code 
+```
 
-<!-- BUILT WITH -->
-
-## Built With
-
-This project was built using these technologies.
-
-- HTML5
-- CSS3
-- Javascript
-- Github
+will insert the code into the signup form
 
 <hr/>
+<br/>
+
+- By default the requests are directed to 
+
+```
+https://boiling-fjord-82978.herokuapp.com
+```
+where a runing version is hosted at heroku
+
+Adding an apiURL search parameter i.e 
+
+```
+/index.html?apiURL=http://localhost:3000
+```
+
+the app will do the requests to your local runing rails server
+
+Note that you may need to adjust the connection port 3000 to what is appropriate
+
+<hr/>
+<br/>
+
+- Alternatively
+  
+You may edit the file close to line 172 to adjust the preferred server address
+
+<br/>
+<hr/>
+<br/>
 
 <!-- CONTACT -->
 
@@ -93,11 +86,10 @@ This project was built using these technologies.
 ## Ioannis Kousis
 
 - Github: [@ioanniskousis](https://github.com/ioanniskousis)
-- Twitter: [@ioanniskousis](https://twitter.com/ioanniskousis)
 - Linkedin: [Ioannis Kousis](https://www.linkedin.com/in/jgkousis)
 - E-mail: jgkousis@gmail.com
 
-
+<br/>
 <hr/>
 
 <!-- MARKDOWN LINKS & IMAGES -->
