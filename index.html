@@ -48,7 +48,7 @@
       height: 100%;
       color: white;
       border: none;
-      background-color: #379;
+      background-color: transparent;
       cursor: pointer;
       margin: 0;
     }
@@ -94,6 +94,10 @@
       border-radius: 4px;
     }
 
+    .mxw800 {
+      max-width: 800px;
+    }
+
     .input-container {
       padding: 20px;
       border-bottom: 1px solid rgba(30, 30, 30, 0.1);
@@ -133,7 +137,7 @@
     }
 
     table {
-      padding: 10px;
+      /* padding: 10px; */
       width: 100%;
     }
 
@@ -142,8 +146,12 @@
       border: 1px solid #999;
     }
 
-    tr {
-      border-bottom: 1px solid #999;
+    td {
+      cursor: pointer;
+    }
+
+    tr:hover {
+      background-color: rgb(166, 193, 216);
     }
 
     .panels-selector {
@@ -166,11 +174,16 @@
     .panels-selector button:hover {
       opacity: 0.7;
     }
+
+    .user-list-item {
+      cursor: pointer;
+      color: brown;
+    }
   </style>
   <script>
     // let apiURL = 'http://localhost:3000';
     let apiURL = 'https://boiling-fjord-82978.herokuapp.com';
-    let auth_token = '';
+    let currentUser = null;
 
     function onload() {
       createEvents();
@@ -197,66 +210,15 @@
           alert(JSON.stringify(json.error));
         }
       } else {
-        auth_token = json.auth_token;
-        const created_referral_code = json.referral ? json.referral : 'not created';
-        const buttonClass = json.referral ? 'hidden-block' : '';
-        const inviterClass = json.inviter_name ? 'input-container' : 'hidden-block';
+        currentUser = json;
 
-        const invited_users = json.invited_users;
-
-        const credit_from_signup = json.credit_from_signup;
-
-        document.getElementById("current_user").innerHTML = json.user_name;
-        // document.getElementById("auth_token").innerHTML = auth_token;
-        document.getElementById("inviter-name").innerHTML = json.inviter_name;
-        document.getElementById("credit-from-sign-up").innerHTML = json.credit_from_signup;
-        document.getElementById("inviter-container").className = inviterClass
-
-        document.getElementById("created_referral_code").innerHTML = created_referral_code;
-        document.getElementById("create-referral").className = buttonClass
-        
-        let invited_users_innerHTML = ''
-        for (let i = 0; i < invited_users.length; i++) {
-          invited_users_innerHTML = invited_users_innerHTML + invited_users[i].name + ' - ' + invited_users[i].email + '<br/>';
-        }
-        document.getElementById("invited_users").innerHTML = invited_users_innerHTML;
-        document.getElementById("credit-from-referral").innerHTML = json.credit_from_referral;
-
-        showSection('user');
+        document.getElementById("user-info-button").className = "nav-button";
+        document.getElementById("users-index-button").className = "nav-button";
+        requestUserInfo(currentUser.user_id);
       }
     }
-
-    function parseSignUpResponse(json) {
-      if (json.error) {
-        alert(JSON.stringify(json.error));
-      } else {
-        auth_token = json.auth_token;
-        const inviterClass = json.inviter_name ? 'input-container' : 'hidden-block';
-        
-        document.getElementById("current_user").innerHTML = json.user_name;
-        // document.getElementById("auth_token").innerHTML = auth_token;
-        document.getElementById("inviter-name").innerHTML = json.inviter_name;
-        document.getElementById("credit-from-sign-up").innerHTML = json.credit_from_signup;
-        document.getElementById("inviter-container").className = inviterClass
-        document.getElementById("created_referral_code").innerHTML = 'not created';
-        document.getElementById("create-referral").className = '';
-        
-        document.getElementById("invited_users").innerHTML = 'none';
-        document.getElementById("credit-from-referral").innerHTML = '$0';
-        showSection('user');
-      }
-    }
-
-    function createNavEvents() {
-      const navButtons = document.getElementsByClassName("nav-button");
-      for (let i = 0; i < navButtons.length; i++) {
-        navButtons[i].onclick = (e) => {
-          showSection(e.target.getAttribute('section'))
-        }
-      }
-    }
-
-    function createLoginEvents() {
+   
+    function createLoginRequest() {
       const form = document.getElementById("loginForm");
 
       form.addEventListener("submit", (e) => {
@@ -276,7 +238,19 @@
       });
     }
 
-    function createSignUpEvents() {
+    function parseSignUpResponse(json) {
+      if (json.error) {
+        alert(JSON.stringify(json.error));
+      } else {
+        currentUser = json;
+
+        document.getElementById("user-info-button").className = "nav-button";
+        document.getElementById("users-index-button").className = "nav-button";
+        requestUserInfo(currentUser.user_id);
+      }
+    }
+
+    function createSignUpRequest() {
       const form = document.getElementById("signupForm");
 
       form.addEventListener("submit", (e) => {
@@ -295,13 +269,135 @@
         })
       });
     }
+ 
+    function invitedUsersTable(users) {
+      if (users.length == 0) return 'none';
+
+      let table = '<table><tbody>';
+      table += '<tr><th>Name</th><th>Email</th><th>Credit</th></tr>';
+      for (let i = 0; i < users.length; i++) {
+        table += `<tr onclick="requestUserInfo(${users[i].id})">`;
+          table += '<td>';
+          table += users[i].name;
+          table += '</td>';
+
+          table += '<td>';
+          table += users[i].email;
+          table += '</td>';
+
+          table += '<td>';
+          table += users[i].credit;
+          table += '</td>';
+
+          table += '</tr>';
+      }
+      table += '</tbody></table>';
+      return table;
+    }
+
+    function parseUserInfo(json) {
+      document.getElementById("selected_user_name").innerHTML = json.name;
+      document.getElementById("selected_user_email").innerHTML = json.email;
+      document.getElementById("selected_user_credit").innerHTML = json.credit;
+      document.getElementById("selected_user_inviter").innerHTML = json.inviter ? json.inviter.name : '';
+      document.getElementById("selected_user_referral_code").innerHTML = json.referral_code ? json.referral_code : 'not created';
+      document.getElementById("create-referral").className = json.referral_code ? 'hidden-block' : (json.id == currentUser.user_id ? 'input-container' : 'hidden-block');
+      document.getElementById("selected_user_invited_users").innerHTML = invitedUsersTable(json.invited_users);
+      
+      showSection('user');
+    }  
+    
+    function requestUserInfo(userId) {
+      const actionUrl = `${apiURL}/user/${userId}`;
+        const options = {
+          method: 'get',
+          headers: {
+            Authorization: 'Bearer ' + currentUser.auth_token
+          }
+        }
+        fetch(actionUrl, options)
+        .then((response) => response.json())
+        .then((json) => parseUserInfo(json))
+        .catch((e) => {
+          alert(e)
+        })
+    }
+
+    function usersIndexTable(users) {
+      if (users.length == 0) return 'none';
+
+      let table = '<table><tbody>';
+      table += '<tr><th>Name</th><th>Email</th><th>Credit</th><th>Inviter</th><th>Referal Code</th></tr>';
+      for (let i = 0; i < users.length; i++) {
+        table += `<tr onclick="requestUserInfo(${users[i].id})">`;
+          table += '<td>';
+          table += users[i].name;
+          table += '</td>';
+
+          table += '<td>';
+          table += users[i].email;
+          table += '</td>';
+
+          table += '<td>';
+          table += users[i].credit;
+          table += '</td>';
+
+          table += '<td>';
+          table += users[i].inviter;
+          table += '</td>';
+
+          table += '<td>';
+          table += users[i].referral_code;
+          table += '</td>';
+
+          table += '</tr>';
+      }
+      table += '</tbody></table>';
+      return table;
+    }
+
+    function parseUsersIndex(json) {
+      document.getElementById("users-index").innerHTML = usersIndexTable(json);
+      
+      showSection('users-index');
+    }  
+    
+    function requestUsersIndex() {
+      const actionUrl = `${apiURL}/users`;
+        const options = {
+          method: 'get',
+          headers: {
+            Authorization: 'Bearer ' + currentUser.auth_token
+          }
+        }
+        fetch(actionUrl, options)
+        .then((response) => response.json())
+        .then((json) => parseUsersIndex(json))
+        .catch((e) => {
+          alert(e)
+        })
+    }
+
+    function parseCreatedReferral(response) {
+      if (response.referral_code) {
+        requestUserInfo(currentUser.user_id);
+      } else {
+        if (response.constrain) {
+          alert(JSON.stringify(response.constrain));
+        } else if (response.error) {
+          alert(response.error);
+        } else {
+          alert(JSON.stringify(response));
+        }
+      }
+    }
 
     async function createReferral() {
       const actionUrl = `${apiURL}/referral`;
       const options = {
         method: 'post',
         headers: {
-          'Authorization': 'Bearer ' + auth_token
+          Authorization: 'Bearer ' + currentUser.auth_token
         }
       }
       await fetch(actionUrl, options)
@@ -313,75 +409,10 @@
           alert("API call Error : " + e);
         });
     }
-    
-    function parseCreatedReferral(response) {
-      if (response.referral_code) {
-        document.getElementById("created_referral_code").innerHTML = response.referral_code;
-        document.getElementById("create-referral").className = 'hidden-block';
-      } else {
-        if (response.constrain) {
-          alert(JSON.stringify(response.constrain));
-        } else if (response.error) {
-          alert(response.error);
-        } else {
-          alert(JSON.stringify(response));
-        }
-        
-      }
-    }
-
-    function parseUsersIndexResponse(json) {
-      if (json.error) {
-        alert(json.error);
-        return
-      }
-      // alert(JSON.stringify(json))
-      // document.getElementById('users-index').innerHTML = JSON.stringify(json);
-
-      const usersTable = document.getElementById('users-index');
-      usersTable.innerHTML = ''
-      const thr = document.createElement('tr');
-      const cell0h = document.createElement('th');
-      const cell1h = document.createElement('th');
-      cell0h.innerHTML = 'Name';
-      cell1h.innerHTML = 'Email';
-      thr.append(cell0h);
-      thr.append(cell1h);
-      usersTable.append(thr);
-      for (let i = 0; i < json.length; i++) {
-        const tr = document.createElement('tr');
-        const cell0 = document.createElement('td');
-        const cell1 = document.createElement('td');
-        cell0.innerHTML = json[i].name;
-        cell1.innerHTML = json[i].email;
-        tr.append(cell0);
-        tr.append(cell1);
-        usersTable.append(tr);
-      }
-    }
-
-    async function loadUsersIndex() {
-      const actionUrl = `${apiURL}/users`;
-      const options = {
-        method: 'get',
-        headers: {
-          'Authorization': 'Bearer ' + auth_token
-        }
-      }
-      await fetch(actionUrl, options)
-        .then((response) => {
-          return response.json();
-        } )
-        .then((json) => parseUsersIndexResponse(json))
-        .catch((e) => {
-          alert("UsersIndex call Error : " + e);
-        });
-    }
 
     function createEvents() {
-      createNavEvents();
-      createLoginEvents();
-      createSignUpEvents();
+      createLoginRequest();
+      createSignUpRequest();
     }
 
     function showSection(section) {
@@ -392,23 +423,17 @@
       }
       document.getElementById(`${section}-section`).style.display = 'block';
       document.getElementById(`${section}-section`).style.visibility = 'visible';
-
-      // if (section == "users-index") {
-      //   loadUsersIndex();
-      // }
     }
   </script>
 </head>
 
 <body onload="onload()">
   <nav id="nav-bar">
-    <button class="nav-button" section="home" id="home-button">Home</button>
-    <button class="nav-button" section="login" id="login-button">Login</button>
-    <button class="nav-button" section="signup" id="signup-button">Sign Up</button>
-    <button class="nav-button" section="user" id="user-button">User</button>
-    <button class="nav-button" section="referral" id="referral-button">Referral</button>
-    <!-- <button class="nav-button" section="users-index" id="users-index-button">Users Index</button> -->
-    
+    <button class="nav-button" onclick="showSection('home')">Home</button>
+    <button class="nav-button" onclick="showSection('login')">Login</button>
+    <button class="nav-button" onclick="showSection('signup')">Sign Up</button>
+    <button class="nav-button hidden-block" id="user-info-button" onclick="requestUserInfo(`${currentUser.user_id}`)">User Info</button>
+    <button class="nav-button hidden-block" id="users-index-button" onclick="requestUsersIndex()">Users Index</button>
   </nav>
   <main>
     <section id="home-section">
@@ -430,12 +455,12 @@
         <form id="loginForm" method="POST" enctype="multipart/form-data">
           <div class="input-container">
             <label for="email">Email</label>
-            <input type="email" name="email" id="email" />
+            <input type="email" name="email" />
           </div>
       
           <div class="input-container">
             <label for="password">Password</label>
-            <input type="password" name="password" id="password" />
+            <input type="password" name="password" />
           </div>
       
           <div class="input-container">
@@ -476,64 +501,51 @@
     </section>
 
     <section id="user-section">
-      <h1>User info</h1>
       <div class="form-container">
-        <!-- <div class="panels-selector">
-          <button panel="details">Details</button>
-          <button panel="referral">Referral</button>
-          <button panel="invites">Invites</button>
-        </div>
-        <div class="user-panel" id="details-panel">
-
-        </div> -->
-        <!-- <div class="user-panel" id="referral-panel">
-
-        </div>
-        <div class="user-panel" id="invites-panel">
-
-        </div> -->
         <div  class="input-container">
           <label>User Name</label>
-          <p id="current_user">not authenticated</p>
-          <!-- <label>Auth Token</label>
-          <p id="auth_token">not authenticated</p> -->
+          <p id="selected_user_name">not authenticated</p>
         </div>
-        <div  class="input-container" id="inviter-container">
-          <label>Inviter</label>
-          <p id="inviter-name">not authenticated</p>
 
-          <label>Credit from sign up with referral code</label>
-          <p id="credit-from-sign-up">$0</p>
-        </div>
-      </div>
-
-      
-    </section>
-
-    <section id="referral-section">
-      <h1>Referral info</h1>
-      <div class="form-container">
         <div  class="input-container">
-          <label>Created Referral Code</label>
-          <p id="created_referral_code">not authenticated</p>
-          <button id="create-referral" onclick="createReferral()">Create Referral Code</button>
+          <label>User Email</label>
+          <p id="selected_user_email">not authenticated</p>
         </div>
+
+        <div  class="input-container">
+          <label>Credit $</label>
+          <p id="selected_user_credit">not authenticated</p>
+        </div>
+
+        <div  class="input-container">
+          <label>Inviter</label>
+          <p id="selected_user_inviter">not authenticated</p>
+        </div>
+
+        <div  class="input-container">
+          <label>Referral Code</label>
+          <p id="selected_user_referral_code">not authenticated</p>
+        </div>
+
+        <div  class="input-container" id="create-referral">
+          <button onclick="createReferral()">
+            Create Referral Code
+          </button>
+        </div>
+
         <div  class="input-container">
           <label>Registered Invited Users</label>
-          <p id="invited_users">not authenticated</p>
-
-          <label>Credit from invited users</label>
-          <p id="credit-from-referral">not authenticated</p>
+          <p id="selected_user_invited_users">none</p>
         </div>
       </div>
     </section>
-    <!-- <section id="users-index-section">
-      <div class="form-container">
-        <table id="users-index">
 
-        </table>
+    <section id="users-index-section">
+      <h1>Users Index</h1>
+      <div class="form-container mxw800" id="users-index">
+
       </div>
-    </section> -->
+    </section>
   </main>
 </body>
 </html>
