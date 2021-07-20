@@ -79,7 +79,7 @@ Note that you may need to adjust the connection port 3000 to what is appropriate
 
 - Alternatively
   
-You may edit the file close to line 172 to adjust the preferred server address
+You may edit the file close to line 220 to adjust the preferred server address
 
 <br/>
 <hr/>
