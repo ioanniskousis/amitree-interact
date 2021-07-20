@@ -179,6 +179,42 @@
       cursor: pointer;
       color: brown;
     }
+
+    .activity-indicator {
+      height: 80px;
+      width: 80px;
+      pointer-events: none;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .activity-indicator {
+        animation: activity-indicator-spin infinite 2s linear;
+      }
+    }
+
+    @keyframes activity-indicator-spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #activity-indicator-container {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100vh;
+      background-color: rgba(100, 100, 100, 0.2);
+      z-index: 10;
+      display: none;
+      visibility: hidden;
+      justify-content: center;
+      align-items: center;
+    }
+
   </style>
   <script>
     // let apiURL = 'http://localhost:3000';
@@ -201,7 +237,18 @@
       }
     }
 
+    function showActivity() {
+      document.getElementById("activity-indicator-container").style.display = 'flex';
+      document.getElementById("activity-indicator-container").style.visibility = 'visible';
+    }
+
+    function hideActivity() {
+      document.getElementById("activity-indicator-container").style.display = 'none';
+      document.getElementById("activity-indicator-container").style.visibility = 'hidden';
+    }
+
     function parseLoginResponse(json) {
+      hideActivity();
       const error = json.error;
       if (error) {
         if (error.user_authentication) {
@@ -223,6 +270,7 @@
 
       form.addEventListener("submit", (e) => {
         e.preventDefault();
+        showActivity();
         const actionUrl = `${apiURL}/authenticate`;
         const formData = new FormData(form);
         const options = {
@@ -233,12 +281,14 @@
         .then((response) => response.json())
         .then((json) => parseLoginResponse(json))
         .catch((e) => {
-          alert(e)
+          hideActivity();
+          alert(e);
         })
       });
     }
 
     function parseSignUpResponse(json) {
+      hideActivity();
       if (json.error) {
         alert(JSON.stringify(json.error));
       } else {
@@ -255,6 +305,7 @@
 
       form.addEventListener("submit", (e) => {
         e.preventDefault();
+        showActivity();
         const actionUrl = `${apiURL}/register`;
         const formData = new FormData(form);
         const options = {
@@ -265,6 +316,7 @@
         .then((response) => response.json())
         .then((json) => parseSignUpResponse(json))
         .catch((err) => {
+          hideActivity();
           alert(err)
         })
       });
@@ -296,6 +348,7 @@
     }
 
     function parseUserInfo(json) {
+      hideActivity();
       document.getElementById("selected_user_name").innerHTML = json.name;
       document.getElementById("selected_user_email").innerHTML = json.email;
       document.getElementById("selected_user_credit").innerHTML = json.credit;
@@ -308,19 +361,21 @@
     }  
     
     function requestUserInfo(userId) {
+      showActivity();
       const actionUrl = `${apiURL}/user/${userId}`;
-        const options = {
-          method: 'get',
-          headers: {
-            Authorization: 'Bearer ' + currentUser.auth_token
-          }
+      const options = {
+        method: 'get',
+        headers: {
+          Authorization: 'Bearer ' + currentUser.auth_token
         }
-        fetch(actionUrl, options)
-        .then((response) => response.json())
-        .then((json) => parseUserInfo(json))
-        .catch((e) => {
-          alert(e)
-        })
+      }
+      fetch(actionUrl, options)
+      .then((response) => response.json())
+      .then((json) => parseUserInfo(json))
+      .catch((e) => {
+        hideActivity();
+        alert(e)
+      })
     }
 
     function usersIndexTable(users) {
@@ -357,28 +412,32 @@
     }
 
     function parseUsersIndex(json) {
+      hideActivity();
       document.getElementById("users-index").innerHTML = usersIndexTable(json);
       
       showSection('users-index');
     }  
     
     function requestUsersIndex() {
+      showActivity();
       const actionUrl = `${apiURL}/users`;
-        const options = {
-          method: 'get',
-          headers: {
-            Authorization: 'Bearer ' + currentUser.auth_token
-          }
+      const options = {
+        method: 'get',
+        headers: {
+          Authorization: 'Bearer ' + currentUser.auth_token
         }
-        fetch(actionUrl, options)
-        .then((response) => response.json())
-        .then((json) => parseUsersIndex(json))
-        .catch((e) => {
-          alert(e)
-        })
+      }
+      fetch(actionUrl, options)
+      .then((response) => response.json())
+      .then((json) => parseUsersIndex(json))
+      .catch((e) => {
+        hideActivity();
+        alert(e)
+      })
     }
 
     function parseCreatedReferral(response) {
+      hideActivity();
       if (response.referral_code) {
         requestUserInfo(currentUser.user_id);
       } else {
@@ -393,6 +452,7 @@
     }
 
     async function createReferral() {
+      showActivity();
       const actionUrl = `${apiURL}/referral`;
       const options = {
         method: 'post',
@@ -406,6 +466,7 @@
         } )
         .then((json) => parseCreatedReferral(json))
         .catch((e) => {
+          hideActivity();
           alert("API call Error : " + e);
         });
     }
@@ -547,5 +608,8 @@
       </div>
     </section>
   </main>
+  <div id="activity-indicator-container">
+    <img src="images/gear.png" alt="" class="activity-indicator" />
+  </div>
 </body>
 </html>
